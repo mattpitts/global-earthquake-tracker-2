@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>3js Earth</title>
+		<link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css?family=Anton" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css?family=Audiowide" rel="stylesheet">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+		<script src="https://threejs.org/build/three.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<script src="OrbitControls.js"></script>
+		<script src="Projector.js"></script>
+		<script src="app.js"></script>
+		<style>
+			body {
+				background-color: black;
+				overflow: hidden;
+				margin: 0;
+				padding: 0;
+				color: rgb(180,180,180);
+			}
+			.title-and-options {
+				position: absolute;
+				/*color: white;*/
+			}
+			.search-options-container {
+				height: 30vh;
+				background: linear-gradient(to bottom right, rgba(100,100,100,.4), rgba(70,70,70,.08));
+				font-size: 1em;
+				font-family: 'Raleway', sans-serif;
+				padding: 1vw;
+				border-radius: 0 0 3% 0;
+				display: none;
+				margin-top: 3px;
+			}
+			.date-instructions {
+				font-size: .5em;
+				font-weight: lighter;
+				color: grey;
+				margin: 0;
+				padding-top: 4px;
+			}
+			.input-title {
+				margin: 0;
+			}
+			.search-submit {
+				margin-top: 1.2em;
+			}
+			.title-container {
+				display: inline-flex;
+				align-items: center;
+				font-family: 'Audiowide', cursive;
+				margin: 0;
+				padding: .3em .5em .3em .5em;
+				background-color: rgba(80,80,80,.4);
+				border-bottom: red;
+				border-width: thick;
+			}
+			.title {
+				margin: 0;
+				padding: 0;
+
+			}
+			.show-search {
+				padding: 5px;
+				font-size: 1.5em;
+				cursor: pointer;
+			}
+			.show-search:hover {
+				font-size: 1.55em;
+			}
+
+			.hide-search {
+				padding: 5px;
+				font-size: 1.5em;
+				cursor: pointer;
+				display: none;
+			}
+			.hide-search:hover {
+				font-size: 1.55em;
+			}
+			.details-container {
+				position: absolute;
+				background: linear-gradient(to bottom right, rgba(100,100,100,.7), rgba(70,70,70,.3));
+				padding: 1em 1em 1em 1em;
+				font-family: 'Raleway', sans-serif;
+				border-radius: 7%;
+				display: none;
+				z-index: 100;
+			}
+			.details-title {
+				font-size: 1.3em;
+				margin-top: 0;
+				margin-bottom: .1em;
+			}
+			.details-details {
+				font-size: .8em;
+			}
+
+		</style>
+	</head>
+	<body>
+		<div class="title-and-options">
+			<div class="title-container">
+				<h2 class="title">Global Earthquake Tracker</h2>
+				<i class="fa fa-search-plus show-search" aria-hidden="true"></i>
+				<i class="fa fa-search-minus hide-search" aria-hidden="true"></i>
+			</div>
+			<div class="search-options-container">
+				<form id="search-form">
+					<label class="input-title" for="start-date">Start Date</label></br>
+					<input type="text" id="start-date" value="01/15/2000"></input></br>
+					<p class = "date-instructions">MM/DD/YYYY</p></br>
+					<label class="input-title" for="end-date">End Date</label></br>
+					<input type="text" id="end-date" value="01/15/2015"></input></br>
+					<p class = "date-instructions">MM/DD/YYYY</p></br>
+					<label class="input-title" for="min-mag">Min. Magnitude</label></br>
+					<input type="text" id="min-mag" value="6"></input></br>
+					<input class="search-submit" type="submit" id="search-submit"></input>
+				</form>
+			</div>
+		</div>
+	</body>
+</html>
