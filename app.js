@@ -1,19 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-	// showLoadingScreen();
 	loadTextures();
 });
 
 
-
 function initScene(textures) {
-	let scene = new THREE.Scene();
 	let WIDTH = window.innerWidth;
 	let HEIGHT = window.innerHeight;
-	let renderer = new THREE.WebGLRenderer({antialias: true, alpha:true});   //
-	renderer.setSize(WIDTH,HEIGHT);
-	document.body.appendChild(renderer.domElement);
-	let camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 20000)
-	camera.position.z = 3;
+	let scene = new THREE.Scene();
+	let renderer = createRenderer(WIDTH, HEIGHT);
+	let camera = createCamera(WIDTH, HEIGHT);
 	let controls = new THREE.OrbitControls(camera, renderer.domElement);
 	initResizeListener(renderer, camera);
 
@@ -52,14 +47,13 @@ function loadTextures() {
 		console.log("Textures Loaded");
 		initScene(textures);
 	}
-	textures.earth = new THREE.TextureLoader(manager).load('textures/earthhires.jpg');   //.load('textures/8081-earthmap4k.jpg')
+	textures.earth = new THREE.TextureLoader(manager).load('textures/earthhires.jpg');
 	textures.earthSpec = new THREE.TextureLoader(manager).load('textures/8081-earthspec2k.jpg');
 	textures.earthBump = new THREE.TextureLoader(manager).load('textures/8081-earthbump4k.jpg');
 	textures.clouds1 = new THREE.TextureLoader(manager).load('textures/alphaclouds.jpg');
 	textures.clouds2 = new THREE.TextureLoader(manager).load('textures/fair_clouds_8k.jpg');
 	textures.stars = new THREE.TextureLoader(manager).load('textures/starfield.jpg');
 }
-
 
 
 function initMarkerClickHandler(renderer, camera, scene, lastClicked) {
@@ -163,6 +157,7 @@ function displayDetails(quake, event) {
 	$('.details-container').show();
 }
 
+
 function createDetailsHtml(quake) {
 	let time = new Date(quake.properties.time);
 	let detailsContainer = $(`<div class='details-container'>`)
@@ -178,6 +173,7 @@ function createDetailsHtml(quake) {
 	}
 	return detailsContainer;
 }
+
 
 function getDetailsPosition(width, height, event) {
 	let offset = 20
@@ -206,6 +202,7 @@ function addMarker(container, lat, lon, rad, quake) {
 	marker.position.set(xyz[0], xyz[1], xyz[2]);
 }
 
+
 function createNewMarker(rad) {
 	let geometry   = new THREE.SphereGeometry(rad, 16, 16)
 	let material  = new THREE.MeshBasicMaterial({
@@ -218,13 +215,22 @@ function createNewMarker(rad) {
 }
 
 
-
-
 function getUSGSData(mesh) {
 	const URL = 'https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson';
-	const startTime = $('#start-date').val();  //'01/15/2000'
-	const endTime = $('#end-date').val(); //'01/15/2015';
-	const minMagnitude = $('#min-mag').val(); //'6';
+	let startTime = $('#start-date').val();  //'01/15/2000'
+	let endTime = $('#end-date').val(); //'01/15/2015';
+	let d = endTime.split('/');
+	let ms = Date.UTC(d[2], d[0], d[1]);
+	if(ms > Date.now()) {
+		let newDate = new Date(Date.now() - 86400);
+		endTime = [newDate.getUTCMonth(), newDate.getUTCDate(), newDate.getFullYear()].join('/');
+	}
+	$('#end-date').val(endTime);
+	let minMagnitude = $('#min-mag').val(); //'6';
+	if (minMagnitude < 5) {
+		minMagnitude = 5;
+	}
+	$('#min-mag').val('5');
 	$.get(`${URL}&starttime=${startTime}&endtime=${endTime}&minmagnitude=${minMagnitude}&limit=800`).then(data => {
 		data.features.forEach(quake => {
 			let lon = quake.geometry.coordinates[0];
@@ -238,6 +244,21 @@ function getUSGSData(mesh) {
 		console.log(error);
 	});
 
+}
+
+
+function createRenderer(WIDTH, HEIGHT) {
+	let renderer = new THREE.WebGLRenderer({antialias: true, alpha:true});   //
+	renderer.setSize(WIDTH,HEIGHT);
+	document.body.appendChild(renderer.domElement);
+	return renderer;
+}
+
+
+function createCamera(WIDTH, HEIGHT) {
+	let camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 20000)
+	camera.position.z = 3;
+	return camera;
 }
 
 
@@ -349,9 +370,11 @@ function initSearchSubmit(earthMesh) {
 	});
 }
 
+
 function showLoadingScreen() {
 	$('.loading-bg').show();
 }
+
 
 function removeLoadingScreen() {
 	$('.loading-bg').hide();
