@@ -1,6 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
+	// showLoadingScreen();
+	loadTextures();
+});
 
 
+
+function initScene(textures) {
 	let scene = new THREE.Scene();
 	let WIDTH = window.innerWidth;
 	let HEIGHT = window.innerHeight;
@@ -10,14 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
 	let camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 20000)
 	camera.position.z = 3;
 	let controls = new THREE.OrbitControls(camera, renderer.domElement);
-
 	initResizeListener(renderer, camera);
 
 	addLights(scene);
-	let earthMesh = addEarth(scene);
-	// let cloudMesh = addClouds1(scene);
-	// let cloudMesh2 = addClouds2(scene);
-	// addStars(scene);
+	let earthMesh = addEarth(scene, textures);
+	let cloudMesh = addClouds1(scene, textures);
+	let cloudMesh2 = addClouds2(scene, textures);
+	addStars(scene, textures);
 
 	initMarkerClickHandler(renderer, camera, scene);
 	initSearchButtons(earthMesh);
@@ -25,22 +29,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 	function animate() {
-		// cloudMesh.rotation.y += .0001;
-		// cloudMesh.rotation.x += .000001;
-		// cloudMesh2.rotation.y += .0002;
-		// cloudMesh2.rotation.x += .000002;
+		cloudMesh.rotation.y += .0001;
+		cloudMesh.rotation.x += .000001;
+		cloudMesh2.rotation.y += .0002;
+		cloudMesh2.rotation.x += .000002;
 		requestAnimationFrame( animate );
 		renderer.render( scene, camera );
 		controls.update();
 	}
 	animate();
 	getUSGSData(earthMesh);
-});
+}
+
+function loadTextures() {
+	let textures = {};
+	let manager = new THREE.LoadingManager();
+	manager.onProgress = function ( item, loaded, total ) {
+		let percent = (loaded / total) * 100;
+		console.log(`Texture loading ${percent}% done.`);
+	}
+	manager.onLoad = () => {
+		console.log("Textures Loaded");
+		initScene(textures);
+	}
+	textures.earth = new THREE.TextureLoader(manager).load('textures/earthhires.jpg');   //.load('textures/8081-earthmap4k.jpg')
+	textures.earthSpec = new THREE.TextureLoader(manager).load('textures/8081-earthspec2k.jpg');
+	textures.earthBump = new THREE.TextureLoader(manager).load('textures/8081-earthbump4k.jpg');
+	textures.clouds1 = new THREE.TextureLoader(manager).load('textures/alphaclouds.jpg');
+	textures.clouds2 = new THREE.TextureLoader(manager).load('textures/fair_clouds_8k.jpg');
+	textures.stars = new THREE.TextureLoader(manager).load('textures/starfield.jpg');
+}
+
+
 
 function initMarkerClickHandler(renderer, camera, scene, lastClicked) {
 	$('canvas').dblclick( event => {
 		event.preventDefault();
-		console.log(event.ctrlKey);
 		let intersects = getIntersects(event, renderer, camera, scene);
 		if (intersects.length) {
 			let target;
@@ -49,18 +73,14 @@ function initMarkerClickHandler(renderer, camera, scene, lastClicked) {
 					if(event.shiftKey) {
 						target = findNextIntersect(intersects, i, lastClicked);
 					} else if(event.ctrlKey) {
-						console.log('ctrlkeydblclick');
 						target = findLastIntersect(intersects, i, lastClicked);
 					} else {
 						target = intersects[i].object;
 					}
 					i = intersects.length;
-					if(target === lastClicked) {
-						return;
-					}
 					target.material.color.b = 1;
 					target.material.color.g = 1;
-					if(lastClicked) {
+					if(lastClicked && lastClicked !== target) {
 						lastClicked.material.color.b = 0;
 						lastClicked.material.color.g = 0;
 					}
@@ -76,7 +96,6 @@ function initMarkerClickHandler(renderer, camera, scene, lastClicked) {
 
 function findNextIntersect(intersects, i, lastClicked) {
 	for (var j = i; j < intersects.length; j++) {
-		console.log(j);
 		if(intersects[j].object == lastClicked && intersects[j+1].object.name === 'marker') {
 			return intersects[j+1].object;
 		} else if(intersects[j].object == lastClicked && intersects[j+1].object.name === 'Earth')
@@ -89,11 +108,9 @@ function findNextIntersect(intersects, i, lastClicked) {
 
 function findLastIntersect(intersects, i, lastClicked) {
 	for (var j = i; j < intersects.length; j++) {
-		console.log(j);
 		if(intersects[j+1].object == lastClicked && intersects[j].object.name === 'marker') {
 			return intersects[j].object;
 		} else if(j === intersects.length - 1) {
-			console.log('didnt find');
 			return intersects[i].object;
 		}
 	}
@@ -201,20 +218,21 @@ function createNewMarker(rad) {
 }
 
 
+
+
 function getUSGSData(mesh) {
 	const URL = 'https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson';
 	const startTime = $('#start-date').val();  //'01/15/2000'
 	const endTime = $('#end-date').val(); //'01/15/2015';
 	const minMagnitude = $('#min-mag').val(); //'6';
 	$.get(`${URL}&starttime=${startTime}&endtime=${endTime}&minmagnitude=${minMagnitude}&limit=800`).then(data => {
-		console.log(data.features);
 		data.features.forEach(quake => {
 			let lon = quake.geometry.coordinates[0];
 			let lat = quake.geometry.coordinates[1];
-			let rad = (quake.properties.mag - minMagnitude + .2)/40
-			// console.log(rad);
+			let rad = (quake.properties.mag - minMagnitude + .2)/40;
 			addMarker(mesh, lat, lon, rad, quake);
 		})
+		removeLoadingScreen();
 
 	}).catch(error => {
 		console.log(error);
@@ -228,34 +246,32 @@ function addLights(scene) {
     light.position.set(0,0,100000000000000);
     scene.add(light);
 
-	let lightAmbient = new THREE.AmbientLight( 0x707070 ); // soft white light
+	let lightAmbient = new THREE.AmbientLight( 0x707070 );
 	scene.add( lightAmbient );
 }
 
 
-function addEarth(scene) {
-	let geometry   = new THREE.SphereGeometry(1, 64, 64)
-	let material  = new THREE.MeshPhongMaterial()
-	// material.map    = THREE.ImageUtils.loadTexture('textures/earthhires.jpg')
-	material.map    = THREE.ImageUtils.loadTexture('textures/earthmap1k.jpg')
-	// material.bumpMap    = THREE.ImageUtils.loadTexture('textures/elev_bump_16k.jpg')
-	material.bumpMap    = THREE.ImageUtils.loadTexture('textures/earthbump1k.jpg')
-	material.bumpScale = 10;
-
-	material.specularMap    = THREE.ImageUtils.loadTexture('textures/earthspec1k.jpg')
-	material.specular  = new THREE.Color(0x222222)
+function addEarth(scene, textures) {
+	let geometry = new THREE.SphereGeometry(1, 64, 64)
+	let material = new THREE.MeshPhongMaterial({
+		map			: textures.earth,
+		bumpMap		: textures.earthBump,
+		bumpScale	: .01,
+		specularMap	: textures.earthSpec,
+		specular	: new THREE.Color(0x222222)
+	});
 	let earthMesh = new THREE.Mesh(geometry, material)
 	earthMesh.rotation.y = Math.PI / 2;
-	earthMesh.name = "Earth"
+	earthMesh.name = "Earth";
 	scene.add(earthMesh);
 	return earthMesh;
 }
 
 
-function addClouds1(scene) {
+function addClouds1(scene, textures) {
 	let geometry   = new THREE.SphereGeometry(1.02, 64, 64)
 	let material  = new THREE.MeshPhongMaterial({
-		alphaMap: THREE.ImageUtils.loadTexture('textures/alphaclouds.jpg'),
+		alphaMap	: textures.clouds1,
   		side        : THREE.DoubleSide,
   		opacity     : 0.1,
   		transparent : true,
@@ -268,12 +284,12 @@ function addClouds1(scene) {
 }
 
 
-function addClouds2(scene) {
+function addClouds2(scene, textures) {
 	let geometry   = new THREE.SphereGeometry(1.04, 64, 64)
 	let material  = new THREE.MeshPhongMaterial({
-		alphaMap: THREE.ImageUtils.loadTexture('textures/fair_clouds_8k.jpg'),
+		alphaMap	: textures.clouds2,
   		side        : THREE.DoubleSide,
-  		opacity     : 0.2,
+  		opacity     : 0.3,
   		transparent : true,
   		depthWrite  : false,
 	});
@@ -284,14 +300,14 @@ function addClouds2(scene) {
 }
 
 
-function addStars(scene) {
+function addStars(scene, textures) {
 	let geometry   = new THREE.SphereGeometry(6000, 64, 64)
-	let material  = new THREE.MeshBasicMaterial({
-		map: THREE.ImageUtils.loadTexture('textures/starfield.jpg'),
-		side        : THREE.DoubleSide
+	let material = new THREE.MeshBasicMaterial({
+		map: textures.stars,
+		side: THREE.DoubleSide
 	});
-	var starMesh = new THREE.Mesh(geometry, material)
-	scene.add(starMesh)
+	let starMesh = new THREE.Mesh(geometry, material)
+	scene.add(starMesh);
 }
 
 
@@ -324,12 +340,21 @@ function initSearchButtons(mesh, scene, animate) {
 function initSearchSubmit(earthMesh) {
 	$('#search-form').submit(event => {
 		event.preventDefault();
+		showLoadingScreen();
 		for(let i = earthMesh.children.length - 1; i>=0; i--) {
 			earthMesh.remove(earthMesh.children[i]);
 		}
 		$('.hide-search').click();
 		getUSGSData(earthMesh);
 	});
+}
+
+function showLoadingScreen() {
+	$('.loading-bg').show();
+}
+
+function removeLoadingScreen() {
+	$('.loading-bg').hide();
 }
 
 

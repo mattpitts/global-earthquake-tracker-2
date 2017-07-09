@@ -6,9 +6,15 @@
 		<link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
 		<link href="https://fonts.googleapis.com/css?family=Anton" rel="stylesheet">
 		<link href="https://fonts.googleapis.com/css?family=Audiowide" rel="stylesheet">
+		<!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css"> -->
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-		<script src="https://threejs.org/build/three.min.js"></script>
+		<!-- <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js"></script> -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js"></script> -->
+		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.7.1/js/bootstrap-datepicker.min.js"></script> -->
+		<script src="https://threejs.org/build/three.min.js"></script>
+
 		<script src="OrbitControls.js"></script>
 		<script src="Projector.js"></script>
 		<script src="app.js"></script>
@@ -97,10 +103,20 @@
 			.details-details {
 				font-size: .8em;
 			}
+			.loading-bg {
+				position: absolute;;
+				min-width: 100vw;
+				min-height: 100vh;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				background-color: rgba(0,0,0,.6);
+			}
 
 		</style>
 	</head>
 	<body>
+		<div class="loading-bg"><img src="loading.gif"/></div>
 		<div class="title-and-options">
 			<div class="title-container">
 				<h2 class="title">Global Earthquake Tracker</h2>
@@ -119,6 +135,7 @@
 					<input type="text" id="min-mag" value="6"></input></br>
 					<input class="search-submit" type="submit" id="search-submit"></input>
 				</form>
+				<!-- <input data-provide="datepicker" /> -->
 			</div>
 		</div>
 	</body>
